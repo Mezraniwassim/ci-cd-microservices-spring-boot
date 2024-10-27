@@ -1,0 +1,156 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'hub.docker.com'
+        DOCKER_REPO = 'mezrani/spring'
+        DOCKER_CREDENTIALS_ID = 'docker_hub_jenkins'
+    }
+
+    options {
+        // Discards old builds to save space
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Timestamps for better log readability
+        timestamps()
+        // Ensures the build is stopped if the same branch is built again
+        disableConcurrentBuilds()
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url: 'https://github.com/Mezraniwassim/spring-boot-microservices.git', branch: 'main'
+            }
+        }
+
+        stage('Build and Test Microservices') {
+            parallel {
+                stage('Eureka Server') {
+                    steps {
+                        script {
+                            dir('eureka-server') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/eureka-server:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/eureka-server:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Gateway') {
+                    steps {
+                        script {
+                            dir('gateway') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/gateway:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/gateway:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Config Server') {
+                    steps {
+                        script {
+                            dir('config-server') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/config-server:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/config-server:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Auth Service') {
+                    steps {
+                        script {
+                            dir('auth-service') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/auth-service:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/auth-service:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('User Service') {
+                    steps {
+                        script {
+                            dir('user-service') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/user-service:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/user-service:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Job Service') {
+                    steps {
+                        script {
+                            dir('job-service') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/job-service:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/job-service:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Notification Service') {
+                    steps {
+                        script {
+                            dir('notification-service') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/notification-service:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/notification-service:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('File Storage Service') {
+                    steps {
+                        script {
+                            dir('file-storage') {
+                                sh 'mvn clean install -DskipTests'
+                                sh 'docker build -t $DOCKER_REGISTRY/$DOCKER_REPO/file-storage:latest .'
+                                docker.withRegistry('https://$DOCKER_REGISTRY', '$DOCKER_CREDENTIALS_ID') {
+                                    sh 'docker push $DOCKER_REGISTRY/$DOCKER_REPO/file-storage:latest'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+        }
+        failure {
+            script {
+                // Notify on failure
+                notifyFailure()
+            }
+        }
+    }
+}
+
+// Function to notify on failure
+def notifyFailure() {
+    // Add your notification code here (e.g., email, Slack)
+    echo "Build failed. Sending notifications..."
+}
