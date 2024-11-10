@@ -1,0 +1,103 @@
+trigger:
+- microservices
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  MAVEN_OPTS: '-DskipTests'
+
+stages:
+  - stage: BuildMicroservices
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build and Test Microservices'
+        steps:
+          - checkout: self
+
+          # Build Eureka Server
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'eureka-server/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Eureka Server'
+
+          # Build Gateway
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'gateway/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Gateway'
+
+          # Build Config Server
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'config-server/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Config Server'
+
+          # Build Auth Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'auth-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Auth Service'
+
+          # Build User Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'user-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build User Service'
+
+          # Build Job Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'job-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Job Service'
+
+          # Build Notification Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'notification-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Notification Service'
+
+          # Build File Storage Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'file-storage/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build File Storage Service'
+
+  - stage: ArchiveArtifacts
+    dependsOn: BuildMicroservices
+    condition: succeeded()
+    jobs:
+      - job: Archive
+        steps:
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '**/target/*.jar'
+              artifact: 'jars'
+            displayName: 'Publish JAR Artifacts'
+
+  - stage: Notifications
+    dependsOn: BuildMicroservices
+    condition: failed()
+    jobs:
+      - job: NotifyFailure
+        steps:
+          - script: |
+              echo "Build failed. Sending notifications..."
+              # Add your notification code here (e.g., integrate with Slack or email)
+            displayName: 'Notify on Failure'
