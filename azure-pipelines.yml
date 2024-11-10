@@ -2,7 +2,7 @@ trigger:
 - microservices
 
 pool:
-  vmImage: 'windows-latest'
+  name: 'Default'
 
 variables:
   MAVEN_OPTS: '-DskipTests'
@@ -13,7 +13,7 @@ stages:
       - job: BuildAndTest
         displayName: 'Build and Test Microservices'
         pool:
-          vmImage: 'windows-latest'
+          name: 'Default'
         steps:
           - checkout: self
 
@@ -87,7 +87,7 @@ stages:
     jobs:
       - job: Archive
         pool:
-          vmImage: 'windows-latest'
+          name: 'Default'
         steps:
           - task: PublishPipelineArtifact@1
             inputs:
@@ -101,7 +101,7 @@ stages:
     jobs:
       - job: NotifyFailure
         pool:
-          vmImage: 'windows-latest'
+          name: 'Default'
         steps:
           - script: |
               echo "Build failed. Sending notifications..."
