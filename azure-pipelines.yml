@@ -17,133 +17,88 @@ stages:
         steps:
           - task: Maven@4
             inputs:
-              mavenPomFile: 'eureka-server/pom.xml'
+              mavenPomFile: 'eureka-server/pom.xml'  # Make sure this is the parent POM including all modules
               goals: 'clean install'
               publishJUnitResults: true
               options: '-DskipTests'
+
+          # Check and publish each JAR artifact if it exists
           - script: |
               if [ -f eureka-server/target/*.jar ]; then
-                echo "File exists."
+                echo "Eureka Server JAR exists."
               else
-                echo "File does not exist."
+                echo "Eureka Server JAR does not exist."
                 exit 1
               fi
           - publish: eureka-server/target/*.jar
             artifact: EurekaServer
+
           - script: |
               if [ -f gateway/target/*.jar ]; then
-                echo "File exists."
+                echo "Gateway JAR exists."
               else
-                echo "File does not exist."
+                echo "Gateway JAR does not exist."
                 exit 1
               fi
           - publish: gateway/target/*.jar
             artifact: Gateway
+
           - script: |
               if [ -f config-server/target/*.jar ]; then
-                echo "File exists."
+                echo "Config Server JAR exists."
               else
-                echo "File does not exist."
+                echo "Config Server JAR does not exist."
                 exit 1
               fi
           - publish: config-server/target/*.jar
             artifact: ConfigServer
+
           - script: |
               if [ -f auth-service/target/*.jar ]; then
-                echo "File exists."
+                echo "Auth Service JAR exists."
               else
-                echo "File does not exist."
+                echo "Auth Service JAR does not exist."
                 exit 1
               fi
           - publish: auth-service/target/*.jar
             artifact: AuthService
+
           - script: |
               if [ -f user-service/target/*.jar ]; then
-                echo "File exists."
+                echo "User Service JAR exists."
               else
-                echo "File does not exist."
+                echo "User Service JAR does not exist."
                 exit 1
               fi
           - publish: user-service/target/*.jar
             artifact: UserService
+
           - script: |
               if [ -f job-service/target/*.jar ]; then
-                echo "File exists."
+                echo "Job Service JAR exists."
               else
-                echo "File does not exist."
+                echo "Job Service JAR does not exist."
                 exit 1
               fi
           - publish: job-service/target/*.jar
             artifact: JobService
+
           - script: |
               if [ -f notification-service/target/*.jar ]; then
-                echo "File exists."
+                echo "Notification Service JAR exists."
               else
-                echo "File does not exist."
+                echo "Notification Service JAR does not exist."
                 exit 1
               fi
           - publish: notification-service/target/*.jar
             artifact: NotificationService
+
           - script: |
               if [ -f file-storage/target/*.jar ]; then
-                echo "File exists."
+                echo "File Storage Service JAR exists."
               else
-                echo "File does not exist."
+                echo "File Storage Service JAR does not exist."
                 exit 1
               fi
-          - publish: file-storage/target/*.jar
-            artifact: FileStorageService
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'file-storage/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
-          - publish: config-server/target/*.jar
-            artifact: ConfigServer
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'auth-service/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
-          - publish: auth-service/target/*.jar
-            artifact: AuthService
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'user-service/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
-          - publish: user-service/target/*.jar
-            artifact: UserService
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'job-service/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
-          - publish: job-service/target/*.jar
-            artifact: JobService
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'notification-service/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
-          - publish: notification-service/target/*.jar
-            artifact: NotificationService
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'file-storage/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
           - publish: file-storage/target/*.jar
             artifact: FileStorageService
