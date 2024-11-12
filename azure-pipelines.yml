@@ -1,104 +1,85 @@
 trigger:
-  branches:
-    include:
-      - 'refs/heads/microservices'
+- main
 
 pool:
-  name: 'Default'
+  vmImage: 'ubuntu-latest'
 
 variables:
-  MAVEN_OPTS: '-Xmx1024m'
+  MAVEN_OPTIONS: '-DskipTests'
 
-stages:
-  - stage: Build
-    jobs:
-      - job: Build_Microservices
-        displayName: 'Build Microservices'
-        steps:
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'eureka-server/pom.xml'  # Make sure this is the parent POM including all modules
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
+jobs:
+- job: BuildAndTestMicroservices
+  displayName: 'Build and Test Microservices'
+  steps:
+    - checkout: self
+      displayName: 'Checkout Repository'
 
-          # Check and publish each JAR artifact if it exists
-          - script: |
-              if [ -f eureka-server/target/*.jar ]; then
-                echo "Eureka Server JAR exists."
-              else
-                echo "Eureka Server JAR does not exist."
-                exit 1
-              fi
-          - publish: eureka-server/target/*.jar
-            artifact: EurekaServer
+    - task: Maven@4
+      displayName: 'Build Eureka Server'
+      inputs:
+        mavenPomFile: 'eureka-server/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f gateway/target/*.jar ]; then
-                echo "Gateway JAR exists."
-              else
-                echo "Gateway JAR does not exist."
-                exit 1
-              fi
-          - publish: gateway/target/*.jar
-            artifact: Gateway
+    - task: Maven@4
+      displayName: 'Build Gateway'
+      inputs:
+        mavenPomFile: 'gateway/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f config-server/target/*.jar ]; then
-                echo "Config Server JAR exists."
-              else
-                echo "Config Server JAR does not exist."
-                exit 1
-              fi
-          - publish: config-server/target/*.jar
-            artifact: ConfigServer
+    - task: Maven@4
+      displayName: 'Build Config Server'
+      inputs:
+        mavenPomFile: 'config-server/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f auth-service/target/*.jar ]; then
-                echo "Auth Service JAR exists."
-              else
-                echo "Auth Service JAR does not exist."
-                exit 1
-              fi
-          - publish: auth-service/target/*.jar
-            artifact: AuthService
+    - task: Maven@4
+      displayName: 'Build Auth Service'
+      inputs:
+        mavenPomFile: 'auth-service/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f user-service/target/*.jar ]; then
-                echo "User Service JAR exists."
-              else
-                echo "User Service JAR does not exist."
-                exit 1
-              fi
-          - publish: user-service/target/*.jar
-            artifact: UserService
+    - task: Maven@4
+      displayName: 'Build User Service'
+      inputs:
+        mavenPomFile: 'user-service/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f job-service/target/*.jar ]; then
-                echo "Job Service JAR exists."
-              else
-                echo "Job Service JAR does not exist."
-                exit 1
-              fi
-          - publish: job-service/target/*.jar
-            artifact: JobService
+    - task: Maven@4
+      displayName: 'Build Job Service'
+      inputs:
+        mavenPomFile: 'job-service/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f notification-service/target/*.jar ]; then
-                echo "Notification Service JAR exists."
-              else
-                echo "Notification Service JAR does not exist."
-                exit 1
-              fi
-          - publish: notification-service/target/*.jar
-            artifact: NotificationService
+    - task: Maven@4
+      displayName: 'Build Notification Service'
+      inputs:
+        mavenPomFile: 'notification-service/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
 
-          - script: |
-              if [ -f file-storage/target/*.jar ]; then
-                echo "File Storage Service JAR exists."
-              else
-                echo "File Storage Service JAR does not exist."
-                exit 1
-              fi
-          - publish: file-storage/target/*.jar
-            artifact: FileStorageService
+    - task: Maven@4
+      displayName: 'Build File Storage Service'
+      inputs:
+        mavenPomFile: 'file-storage/pom.xml'
+        goals: 'clean install $(MAVEN_OPTIONS)'
+
+- job: ArchiveArtifacts
+  displayName: 'Archive Build Artifacts'
+  dependsOn: BuildAndTestMicroservices
+  steps:
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        PathtoPublish: '**/target/*.jar'
+        ArtifactName: 'jarFiles'
+        publishLocation: 'Container'
+
+- job: Cleanup
+  displayName: 'Cleanup Workspace'
+  dependsOn: BuildAndTestMicroservices
+  steps:
+    - task: DeleteFiles@1
+      displayName: 'Delete Workspace Files'
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: '**/*'
+        RemoveSourceFolder: true
