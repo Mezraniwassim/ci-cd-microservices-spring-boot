@@ -1,8 +1,10 @@
 trigger:
-- main
+- microservices
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: Default
+  demands:
+    - maven
 
 variables:
   MAVEN_OPTIONS: '-DskipTests'
