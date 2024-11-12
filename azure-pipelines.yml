@@ -1,79 +1,109 @@
 trigger:
-- main
+- microservices
 
 pool:
    name: 'Default'
 
+variables:
+  MAVEN_OPTS: '-DskipTests'
+
 stages:
-- stage: BuildMicroservices
-  jobs:
-    - job: Build
-      displayName: 'Build and Test Microservices'
-      pool:
-        name: 'Default'
-      steps:
-        - checkout: self
+  - stage: BuildMicroservices
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build and Test Microservices'
+        pool:
+          name: 'Default'
+        steps:
+          - checkout: self
 
-        # Install Maven
-        - script: |
-            sudo apt-get update
-            sudo apt-get install -y maven
-            mvn -version
-          displayName: 'Install Maven'
+          # Build Eureka Server
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'eureka-server/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Eureka Server'
 
-        # Build Eureka Server
-        - script: |
-            mvn -f eureka-server/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build Eureka Server'
+          # Build Gateway
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'gateway/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Gateway'
 
-        # Build Gateway
-        - script: |
-            mvn -f gateway/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build Gateway'
+          # Build Config Server
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'config-server/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Config Server'
 
-        # Build Config Server
-        - script: |
-            mvn -f config-server/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build Config Server'
+          # Build Auth Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'auth-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Auth Service'
 
-        # Build Auth Service
-        - script: |
-            mvn -f auth-service/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build Auth Service'
+          # Build User Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'user-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build User Service'
 
-        # Build User Service
-        - script: |
-            mvn -f user-service/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build User Service'
+          # Build Job Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'job-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Job Service'
 
-        # Build File Storage Service
-        - script: |
-            mvn -f file-storage/pom.xml clean install $(MAVEN_OPTS)
-          displayName: 'Build File Storage Service'
+          # Build Notification Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'notification-service/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build Notification Service'
 
-- stage: ArchiveArtifacts
-  dependsOn: BuildMicroservices
-  condition: succeeded()
-  jobs:
-    - job: Archive
-      pool:
-        name: 'Default'
-      steps:
-        - task: PublishPipelineArtifact@1
-          inputs:
-            targetPath: '**/target/*.jar'
-            artifact: 'jars'
-          displayName: 'Publish JAR Artifacts'
+          # Build File Storage Service
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'file-storage/pom.xml'
+              goals: 'clean install'
+              options: $(MAVEN_OPTS)
+            displayName: 'Build File Storage Service'
 
-- stage: Notifications
-  dependsOn: BuildMicroservices
-  condition: failed()
-  jobs:
-    - job: NotifyFailure
-      pool:
-        name: 'Default'
-      steps:
-        - script: |
-            echo "Build failed. Sending notifications..."
-            # Add your notification code here (e.g., integrate with Slack or email)
-          displayName: 'Notify on Failure'
+  - stage: ArchiveArtifacts
+    dependsOn: BuildMicroservices
+    condition: succeeded()
+    jobs:
+      - job: Archive
+        pool:
+          name: 'Default'
+        steps:
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '**/target/*.jar'
+              artifact: 'jars'
+            displayName: 'Publish JAR Artifacts'
+
+  - stage: Notifications
+    dependsOn: BuildMicroservices
+    condition: failed()
+    jobs:
+      - job: NotifyFailure
+        pool:
+          name: 'Default'
+        steps:
+          - script: |
+              echo "Build failed. Sending notifications..."
+              # Add your notification code here (e.g., integrate with Slack or email)
+            displayName: 'Notify on Failure'
