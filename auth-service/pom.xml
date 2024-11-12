@@ -8,6 +8,16 @@
         <version>2.7.14</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+    <repository>
+  <id>devops</id>
+  <url>https://pkgs.dev.azure.com/mezraniwassim/ci-cd-microservices-spring-boot/_packaging/devops/maven/v1</url>
+  <releases>
+    <enabled>true</enabled>
+  </releases>
+  <snapshots>
+    <enabled>true</enabled>
+  </snapshots>
+</repository>
     <groupId>com.safalifter</groupId>
     <artifactId>auth-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
