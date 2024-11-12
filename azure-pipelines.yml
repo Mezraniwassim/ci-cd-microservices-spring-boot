@@ -2,7 +2,7 @@ trigger:
 - microservices
 
 pool:
-  name: Default
+  name: 'Azure Pipelines'
   demands:
     - maven
 
