@@ -1,8 +1,8 @@
 trigger:
-- main
+- microservices
 
 pool:
-  name: 'Default'  # Using the default agent pool
+  name: 'Default'
 
 variables:
   MAVEN_OPTIONS: '-DskipTests'
@@ -10,8 +10,6 @@ variables:
 jobs:
   - job: BuildAndTestMicroservices
     displayName: 'Build and Test Microservices'
-    pool:
-      vmImage: 'ubuntu-latest'
     steps:
       - checkout: self
         clean: 'true'
