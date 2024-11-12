@@ -1,0 +1,79 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: BuildMicroservices
+  jobs:
+    - job: Build
+      displayName: 'Build and Test Microservices'
+      pool:
+        name: 'Default'
+      steps:
+        - checkout: self
+
+        # Install Maven
+        - task: UseMaven@0
+          inputs:
+            mavenVersionOption: 'Default'
+            mavenVersion: '3.6.3' # Specify the version you need
+          displayName: 'Install Maven'
+
+        # Build Eureka Server
+        - script: |
+            mvn -f eureka-server/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build Eureka Server'
+
+        # Build Gateway
+        - script: |
+            mvn -f gateway/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build Gateway'
+
+        # Build Config Server
+        - script: |
+            mvn -f config-server/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build Config Server'
+
+        # Build Auth Service
+        - script: |
+            mvn -f auth-service/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build Auth Service'
+
+        # Build User Service
+        - script: |
+            mvn -f user-service/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build User Service'
+
+        # Build File Storage Service
+        - script: |
+            mvn -f file-storage/pom.xml clean install $(MAVEN_OPTS)
+          displayName: 'Build File Storage Service'
+
+- stage: ArchiveArtifacts
+  dependsOn: BuildMicroservices
+  condition: succeeded()
+  jobs:
+    - job: Archive
+      pool:
+        name: 'Default'
+      steps:
+        - task: PublishPipelineArtifact@1
+          inputs:
+            targetPath: '**/target/*.jar'
+            artifact: 'jars'
+          displayName: 'Publish JAR Artifacts'
+
+- stage: Notifications
+  dependsOn: BuildMicroservices
+  condition: failed()
+  jobs:
+    - job: NotifyFailure
+      pool:
+        name: 'Default'
+      steps:
+        - script: |
+            echo "Build failed. Sending notifications..."
+            # Add your notification code here (e.g., integrate with Slack or email)
+          displayName: 'Notify on Failure'
