@@ -21,21 +21,82 @@ stages:
               goals: 'clean install'
               publishJUnitResults: true
               options: '-DskipTests'
+          - script: |
+              if [ -f eureka-server/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
           - publish: eureka-server/target/*.jar
             artifact: EurekaServer
-
-          - task: Maven@4
-            inputs:
-              mavenPomFile: 'gateway/pom.xml'
-              goals: 'clean install'
-              publishJUnitResults: true
-              options: '-DskipTests'
+          - script: |
+              if [ -f gateway/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
           - publish: gateway/target/*.jar
             artifact: Gateway
+          - script: |
+              if [ -f config-server/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: config-server/target/*.jar
+            artifact: ConfigServer
+          - script: |
+              if [ -f auth-service/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: auth-service/target/*.jar
+            artifact: AuthService
+          - script: |
+              if [ -f user-service/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: user-service/target/*.jar
+            artifact: UserService
+          - script: |
+              if [ -f job-service/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: job-service/target/*.jar
+            artifact: JobService
+          - script: |
+              if [ -f notification-service/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: notification-service/target/*.jar
+            artifact: NotificationService
+          - script: |
+              if [ -f file-storage/target/*.jar ]; then
+                echo "File exists."
+              else
+                echo "File does not exist."
+                exit 1
+              fi
+          - publish: file-storage/target/*.jar
+            artifact: FileStorageService
 
           - task: Maven@4
             inputs:
-              mavenPomFile: 'config-server/pom.xml'
+              mavenPomFile: 'file-storage/pom.xml'
               goals: 'clean install'
               publishJUnitResults: true
               options: '-DskipTests'
