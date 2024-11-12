@@ -1,87 +1,72 @@
 trigger:
-- microservices
+- main
 
 pool:
-  name: Default
-  vmImage: 'ubuntu-latest'
-  demands:
-    - maven
+  name: 'Default'  # Using the default agent pool
 
 variables:
   MAVEN_OPTIONS: '-DskipTests'
 
 jobs:
-- job: BuildAndTestMicroservices
-  displayName: 'Build and Test Microservices'
-  steps:
-    - checkout: self
-      displayName: 'Checkout Repository'
+  - job: BuildAndTestMicroservices
+    displayName: 'Build and Test Microservices'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - checkout: self
+        clean: 'true'
+        displayName: 'Checkout Repository'
 
-    - task: Maven@4
-      displayName: 'Build Eureka Server'
-      inputs:
-        mavenPomFile: 'eureka-server/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      # Building Eureka Server
+      - task: Maven@4
+        displayName: 'Build Eureka Server'
+        inputs:
+          mavenPomFile: 'eureka-server/pom.xml'
+          goals: 'clean install $(MAVEN_OPTIONS)'
 
-    - task: Maven@4
-      displayName: 'Build Gateway'
-      inputs:
-        mavenPomFile: 'gateway/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      # Building Gateway
+      - task: Maven@4
+        displayName: 'Build Gateway'
+        inputs:
+          mavenPomFile: 'gateway/pom.xml'
+          goals: 'clean install $(MAVEN_OPTIONS)'
 
-    - task: Maven@4
-      displayName: 'Build Config Server'
-      inputs:
-        mavenPomFile: 'config-server/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      # Add other Maven build steps for other services...
 
-    - task: Maven@4
-      displayName: 'Build Auth Service'
-      inputs:
-        mavenPomFile: 'auth-service/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      # Debugging step to list files for troubleshooting
+      - script: |
+          echo "Listing files for debugging"
+          ls -R $(Build.SourcesDirectory)
+        displayName: 'List files for debugging'
 
-    - task: Maven@4
-      displayName: 'Build User Service'
-      inputs:
-        mavenPomFile: 'user-service/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+  - job: ArchiveArtifacts
+    displayName: 'Archive Build Artifacts'
+    dependsOn: BuildAndTestMicroservices
+    steps:
+      # Publishing the built .jar files as artifacts
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Eureka Server Artifact'
+        inputs:
+          PathtoPublish: 'eureka-server/target/*.jar'
+          ArtifactName: 'eureka-server'
+          publishLocation: 'Container'
 
-    - task: Maven@4
-      displayName: 'Build Job Service'
-      inputs:
-        mavenPomFile: 'job-service/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Gateway Artifact'
+        inputs:
+          PathtoPublish: 'gateway/target/*.jar'
+          ArtifactName: 'gateway'
+          publishLocation: 'Container'
 
-    - task: Maven@4
-      displayName: 'Build Notification Service'
-      inputs:
-        mavenPomFile: 'notification-service/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
+      # Add more artifact publishing tasks as needed for other services
 
-    - task: Maven@4
-      displayName: 'Build File Storage Service'
-      inputs:
-        mavenPomFile: 'file-storage/pom.xml'
-        goals: 'clean install $(MAVEN_OPTIONS)'
-
-- job: ArchiveArtifacts
-  displayName: 'Archive Build Artifacts'
-  dependsOn: BuildAndTestMicroservices
-  steps:
-    - task: PublishBuildArtifacts@1
-      displayName: 'Publish Build Artifacts'
-      inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)/**/target/*.jar'
-        ArtifactName: 'jarFiles'
-
-- job: Cleanup
-  displayName: 'Cleanup Workspace'
-  dependsOn: BuildAndTestMicroservices
-  steps:
-    - task: DeleteFiles@1
-      displayName: 'Delete Workspace Files'
-      inputs:
-        SourceFolder: '$(Build.SourcesDirectory)'
-        Contents: '**/*'
-        RemoveSourceFolder: true
+  - job: Cleanup
+    displayName: 'Cleanup Workspace'
+    dependsOn: BuildAndTestMicroservices
+    steps:
+      - task: DeleteFiles@1
+        displayName: 'Delete Workspace Files'
+        inputs:
+          SourceFolder: '$(Build.SourcesDirectory)'
+          Contents: '**/*'
+          RemoveSourceFolder: true
