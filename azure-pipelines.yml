@@ -2,7 +2,8 @@ trigger:
 - microservices
 
 pool:
-  name: 'Azure Pipelines'
+  name: Default
+  vmImage: 'ubuntu-latest'
   demands:
     - maven
 
