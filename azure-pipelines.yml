@@ -1,0 +1,115 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: 'Default'
+
+variables:
+  MAVEN_OPTS: '-Xmx1024m'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build_Microservices
+        displayName: 'Build Microservices'
+        strategy:
+          parallel:
+            # Define each microservice as a separate job for parallel builds
+            - job: Build_Eureka_Server
+              displayName: 'Build Eureka Server'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'eureka-server/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: eureka-server/target/*.jar
+                  artifactName: EurekaServer
+
+            - job: Build_Gateway
+              displayName: 'Build Gateway'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'gateway/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: gateway/target/*.jar
+                  artifactName: Gateway
+
+            - job: Build_Config_Server
+              displayName: 'Build Config Server'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'config-server/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: config-server/target/*.jar
+                  artifactName: ConfigServer
+
+            - job: Build_Auth_Service
+              displayName: 'Build Auth Service'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'auth-service/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: auth-service/target/*.jar
+                  artifactName: AuthService
+
+            - job: Build_User_Service
+              displayName: 'Build User Service'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'user-service/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: user-service/target/*.jar
+                  artifactName: UserService
+
+            - job: Build_Job_Service
+              displayName: 'Build Job Service'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'job-service/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: job-service/target/*.jar
+                  artifactName: JobService
+
+            - job: Build_Notification_Service
+              displayName: 'Build Notification Service'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'notification-service/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: notification-service/target/*.jar
+                  artifactName: NotificationService
+
+            - job: Build_File_Storage_Service
+              displayName: 'Build File Storage Service'
+              steps:
+                - task: Maven@3
+                  inputs:
+                    mavenPomFile: 'file-storage/pom.xml'
+                    goals: 'clean install'
+                    publishJUnitResults: true
+                    options: '-DskipTests'
+                - publish: file-storage/target/*.jar
+                  artifactName: FileStorageService
+
