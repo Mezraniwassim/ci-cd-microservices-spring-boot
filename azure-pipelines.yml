@@ -1,139 +1,29 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
 trigger:
 - microservices
 
-pool:
-  name: 'Default'
+resources:
+- repo: self
 
 variables:
-  MAVEN_OPTIONS: '-DskipTests'
+  tag: '$(Build.BuildId)'
 
-jobs:
-  - job: BuildAndTestMicroservices
-    displayName: 'Build and Test Microservices'
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: 'Default'
     steps:
-      - checkout: self
-        clean: 'true'
-        displayName: 'Checkout Repository'
-
-      # Building Eureka Server
-      - task: Maven@4
-        displayName: 'Build Eureka Server'
-        inputs:
-          mavenPomFile: 'eureka-server/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building Gateway
-      - task: Maven@4
-        displayName: 'Build Gateway'
-        inputs:
-          mavenPomFile: 'gateway/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building Config Server
-      - task: Maven@4
-        displayName: 'Build Config Server'
-        inputs:
-          mavenPomFile: 'config-server/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building Auth Service
-      - task: Maven@4
-        displayName: 'Build Auth Service'
-        inputs:
-          mavenPomFile: 'auth-service/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building User Service
-      - task: Maven@4
-        displayName: 'Build User Service'
-        inputs:
-          mavenPomFile: 'user-service/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building Job Service
-      - task: Maven@4
-        displayName: 'Build Job Service'
-        inputs:
-          mavenPomFile: 'job-service/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building Notification Service
-      - task: Maven@4
-        displayName: 'Build Notification Service'
-        inputs:
-          mavenPomFile: 'notification-service/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Building File Storage Service
-      - task: Maven@4
-        displayName: 'Build File Storage Service'
-        inputs:
-          mavenPomFile: 'file-storage/pom.xml'
-          options: '$(MAVEN_OPTIONS)'
-          goals: 'clean package'
-
-      # Publishing the built .jar files as artifacts
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Eureka Server Artifact'
-        inputs:
-          targetPath: 'eureka-server/target/*.jar'
-          artifact: 'eureka-server'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Gateway Artifact'
-        inputs:
-          targetPath: 'gateway/target/*.jar'
-          artifact: 'gateway'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Config Server Artifact'
-        inputs:
-          targetPath: 'config-server/target/*.jar'
-          artifact: 'config-server'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Auth Service Artifact'
-        inputs:
-          targetPath: 'auth-service/target/*.jar'
-          artifact: 'auth-service'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish User Service Artifact'
-        inputs:
-          targetPath: 'user-service/target/*.jar'
-          artifact: 'user-service'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Job Service Artifact'
-        inputs:
-          targetPath: 'job-service/target/*.jar'
-          artifact: 'job-service'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish Notification Service Artifact'
-        inputs:
-          targetPath: 'notification-service/target/*.jar'
-          artifact: 'notification-service'
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish File Storage Service Artifact'
-        inputs:
-          targetPath: 'file-storage/target/*.jar'
-          artifact: 'file-storage'
-
-  - job: Cleanup
-    displayName: 'Cleanup Workspace'
-    dependsOn: BuildAndTestMicroservices
-    steps:
-      - task: DeleteFiles@1
-        displayName: 'Delete Workspace Files'
-        inputs:
-          SourceFolder: '$(Build.SourcesDirectory)'
-          Contents: '**/*'
+    - task: Docker@2
+      displayName: Build an image
+      inputs:
+        command: build
+        dockerfile: '$(Build.SourcesDirectory)/auth-service/Dockerfile'
+        tags: |
+          $(tag)
