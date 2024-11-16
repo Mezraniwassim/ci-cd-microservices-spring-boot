@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service-deployment
+  labels:
+    app: auth-service
+spec:
+  replicas: 3  # Number of replicas for the service
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: <your-docker-registry>/auth-service:latest  # Replace with your image name and tag
+        ports:
+        - containerPort: 8080  # Port exposed by the Spring Boot application
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"  # Optional: Set your Spring profiles if needed
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret  # Reference to a secret for DB credentials
+              key: database-url
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: database-user
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: database-password
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:  # Liveness probe to check if the service is running correctly
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:  # Readiness probe to check if the service is ready to receive traffic
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10

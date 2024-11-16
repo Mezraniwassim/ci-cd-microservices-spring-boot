@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server-deployment
+  labels:
+    app: eureka-server
+spec:
+  replicas: 3  # Number of replicas for high availability
+  selector:
+    matchLabels:
+      app: eureka-server
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      containers:
+      - name: eureka-server
+        image: <your-docker-registry>/eureka-server:latest  # Replace with your image name
+        ports:
+        - containerPort: 8761  # Default Eureka port
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"  # Optional: Set Spring profiles
+        - name: EUREKA_SERVER_HOSTNAME
+          value: "eureka-server"  # Set Eureka server hostname (useful in cluster)
+        - name: EUREKA_SERVER_PORT
+          value: "8761"  # Eureka default port
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /eureka/apps
+            port: 8761
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /eureka/apps
+            port: 8761
+          initialDelaySeconds: 10
+          periodSeconds: 10
