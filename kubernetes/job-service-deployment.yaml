@@ -5,7 +5,7 @@ metadata:
   labels:
     app: job-service
 spec:
-  replicas: 3  # Number of replicas for high availability
+  replicas: 3  
   selector:
     matchLabels:
       app: job-service
@@ -16,14 +16,14 @@ spec:
     spec:
       containers:
       - name: job-service
-        image: <your-docker-registry>/job-service:latest  # Replace with your image name
+        image: wassimacrtest.azurecr.io/job-service:latest  
         ports:
-        - containerPort: 8080  # Default job-service port
+        - containerPort: 8080  
         env:
         - name: SPRING_PROFILES_ACTIVE
-          value: "prod"  # Optional: Set Spring profiles
+          value: "prod"  
         - name: EUREKA_SERVER_URL
-          value: "http://eureka-server:8761/eureka/"  # Replace with Eureka server URL if necessary
+          value: "http://eureka-server:8761/eureka/"  
         resources:
           limits:
             memory: "512Mi"

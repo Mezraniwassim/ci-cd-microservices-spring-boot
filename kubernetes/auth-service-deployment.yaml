@@ -5,7 +5,7 @@ metadata:
   labels:
     app: auth-service
 spec:
-  replicas: 3  # Number of replicas for the service
+  replicas: 3 
   selector:
     matchLabels:
       app: auth-service
@@ -16,17 +16,17 @@ spec:
     spec:
       containers:
       - name: auth-service
-        image: <your-docker-registry>/auth-service:latest  # Replace with your image name and tag
+        image: wassimacrtest.azurecr.io/auth-service:latest
         ports:
-        - containerPort: 8080  # Port exposed by the Spring Boot application
+        - containerPort: 8080  
         env:
         - name: SPRING_PROFILES_ACTIVE
-          value: "prod"  # Optional: Set your Spring profiles if needed
+          value: "prod" 
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: db-secret  # Reference to a secret for DB credentials
-              key: database-url
+              name: db-secret  
+              key: "jdbc:postgresql://localhost:5432/microservice"
         - name: DATABASE_USER
           valueFrom:
             secretKeyRef:
@@ -44,13 +44,13 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
-        livenessProbe:  # Liveness probe to check if the service is running correctly
+        livenessProbe:  
           httpGet:
             path: /actuator/health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 30
-        readinessProbe:  # Readiness probe to check if the service is ready to receive traffic
+        readinessProbe:  
           httpGet:
             path: /actuator/health
             port: 8080

@@ -6,10 +6,10 @@ metadata:
     app: auth-service
 spec:
   selector:
-    app: auth-service  # The service will route traffic to the pods with the app label "auth-service"
+    app: auth-service  
   ports:
     - protocol: TCP
-      port: 80         # Port on which the service will be accessible within the cluster
-      targetPort: 8080  # Port on which the container is running the Spring Boot app
-  type: ClusterIP      # Service type (ClusterIP for internal access, LoadBalancer for external access)
-  clusterIP: None      # Optional: If you need headless service (for StatefulSets or DNS resolution)
+      port: 80         
+      targetPort: 8080  
+  type: ClusterIP      
+  clusterIP: None      
